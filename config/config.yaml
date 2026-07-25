@@ -1,40 +1,51 @@
-# Wajeeha AI — core configuration
-# Secrets (API keys, tokens) belong in .env, NOT here. This file holds
-# non-secret behavior/config only.
+# ==========================================================
+# Wajeeha AI Core Configuration
+# Non-secret configuration only.
+# API Keys belong in .env
+# ==========================================================
 
 llm:
-  # Which provider handles requests by default. Per-agent overrides are
-  # possible in agents.*.llm_provider below.
-  default_provider: ollama
+  default_provider: gemini
+
   providers:
-    anthropic:
-      model: claude-sonnet-4-6
+
+    gemini:
+      model: gemini-3.6-flash
       max_tokens: 4096
+      temperature: 0.7
+
     openai:
       model: gpt-4o
       max_tokens: 4096
-    gemini:
-      model: gemini-1.5-pro
+
+    anthropic:
+      model: claude-sonnet-4-6
       max_tokens: 4096
+
     ollama:
       model: llama3.1
       base_url: http://localhost:11434
 
 memory:
+
   short_term:
     max_turns: 40
+
   long_term:
     db_path: ./data/long_term.sqlite3
+
   semantic:
     chroma_path: ./data/chroma
     embedding_model: all-MiniLM-L6-v2
     collection_name: wajeeha_semantic
 
 agents:
+
   coding:
     enabled: true
+
     workspace_root: ./workspace
-    # Commands here run without confirmation. Everything else prompts.
+
     safe_shell_commands:
       - git status
       - git diff
@@ -42,22 +53,24 @@ agents:
       - pytest
       - ls
       - cat
+
     require_confirmation_for_writes: true
+
   home:
     enabled: true
-    # Wajeeha talks to Home Assistant, not to Google directly — Google
-    # does not expose a general local-control API for Google Home Mini.
-    # Home Assistant's Google Assistant / local integrations bridge that gap.
+
     home_assistant:
       base_url: http://homeassistant.local:8123
-      # token goes in .env as HOME_ASSISTANT_TOKEN
+
     default_room: living_room
 
 planner:
+
   max_plan_steps: 12
   max_retries_per_step: 2
   reflect_after_each_step: true
 
 logging:
+
   level: INFO
   log_dir: ./logs
