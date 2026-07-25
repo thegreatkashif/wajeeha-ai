@@ -10,27 +10,32 @@ mobile app, etc.) are being added on top of this incrementally.
 ## Requirements
 
 - Python 3.11+
-- An Anthropic (or OpenAI/Gemini/Ollama) API key
+- [Ollama](https://ollama.com/download) installed and running locally
+  (free, runs on your own machine — no API key needed)
 - A running [Home Assistant](https://www.home-assistant.io/) instance if
-  you want the Home agent active
+  you want the Home agent active (optional)
 
 ## Setup
 
 ```bash
 python -m venv .venv
-source .venv/bin/activate        # Windows: .venv\Scripts\activate
+.venv\Scripts\Activate.ps1        # Mac/Linux: source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env              # then fill in your API key(s)
+ollama pull llama3.1
+cp .env.example .env
 ```
 
-Edit `config/config.yaml` if you want to change the default LLM provider,
-model, memory paths, or agent settings.
+The default LLM provider is set to `ollama` in `config/config.yaml`, so no
+API key is required out of the box. If you'd rather use a paid cloud
+provider (Anthropic, OpenAI, Gemini) for better response quality, add the
+relevant key to `.env` and change `default_provider` in
+`config/config.yaml` to match.
 
 ## Run
 
 ```bash
 python cli.py chat                # interactive REPL
-python cli.py run "turn off the living room lights"   # one-shot
+python cli.py run "list the files in my workspace"   # one-shot
 ```
 
 ## Test
@@ -49,8 +54,16 @@ config/ config.yaml (behavior) + settings.py (typed loader)
 tests/ pytest suite
 cli.py entry point
 
-## Notes on the Home agent
 
-Google doesn't expose a general local-control API for Google Home Mini.
-This agent talks to Home Assistant instead — see the comment block at the
-top of `agents/home_agent.py` for the full explanation.
+## Notes
+
+- **Home agent / Google Home Mini:** Google doesn't expose a general
+  local-control API for Google Home Mini. This agent talks to Home
+  Assistant instead — see the comment block at the top of
+  `agents/home_agent.py` for the full explanation. Until
+  `HOME_ASSISTANT_TOKEN` is set in `.env`, the home agent is disabled and
+  only the coding agent runs.
+- **Local model quality:** `llama3.1` via Ollama is free but less reliable
+  at following strict instructions than cloud models — short/casual
+  messages ("hii") sometimes produce no response. Fuller sentences work
+  better.
