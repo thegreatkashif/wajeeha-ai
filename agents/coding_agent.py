@@ -97,7 +97,7 @@ class CodingAgent(BaseAgent):
                 return "Write cancelled by user."
 
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(content.strip("\n") + "\n", encoding="utf-8")
+        path.write_text(content.strip() + "\n", encoding="utf-8")
         return f"Wrote {path.relative_to(self._root)}"
 
     async def list_files(self, instruction: str) -> str:

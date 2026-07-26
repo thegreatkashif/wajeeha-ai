@@ -27,9 +27,11 @@ class ShortTermMemory:
     def as_list(self) -> list[ConversationTurn]:
         return list(self._turns)
 
-    def as_llm_messages(self) -> list[dict]:
-        """Format for a standard chat-completions-style messages array."""
-        return [{"role": t.role.value, "content": t.content} for t in self._turns]
+    def as_llm_messages(self, limit: int | None = None) -> list[dict]:
+        """Format for a standard chat-completions-style messages array.
+        `limit`, if given, returns only the most recent `limit` turns."""
+        turns = list(self._turns)[-limit:] if limit else list(self._turns)
+        return [{"role": t.role.value, "content": t.content} for t in turns]
 
     def clear(self) -> None:
         self._turns.clear()

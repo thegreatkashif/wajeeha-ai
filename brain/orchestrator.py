@@ -56,11 +56,17 @@ class Orchestrator:
     async def handle_goal(self, goal: str) -> str:
         self._short_term.add_user(goal)
         memory_context = self._gather_memory_context(goal)
+        # Last 3 exchanges (6 turns) of raw conversation, excluding the goal
+        # we just appended above — the planner gets that via `goal` itself,
+        # this is purely "what were we just talking about" context so
+        # follow-ups like "it has an indentation error" resolve correctly.
+        history = self._short_term.as_llm_messages(limit=7)[:-1]
 
         plan = await self._planner.create_plan(
             goal=goal,
             available_tools_description=self._describe_all_tools(),
             memory_context=memory_context,
+            conversation_history=history,
         )
         logger.info("Plan for goal %r: %s", goal, plan.model_dump())
 
