@@ -1,7 +1,9 @@
 anthropic>=0.40.0
-openai>=1.50.0
+openai>=1.50.0          # also used for OpenRouter (OpenAI-compatible API)
 ollama>=0.3.0
 google-generativeai>=0.8.0
+TTS>=0.22.0              # Coqui TTS — voice cloning (voice/clone.py), CPU-capable
+paho-mqtt>=2.1.0         # talks to Mosquitto on the home server
 chromadb>=0.5.0
 sentence-transformers>=3.0.0
 pydantic>=2.8.0

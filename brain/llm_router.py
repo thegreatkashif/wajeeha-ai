@@ -81,6 +81,47 @@ class OpenAIProvider(LLMProvider):
         return LLMResponse(text=text, provider=self.name, model=self._model, raw=resp)
 
 
+class OpenRouterProvider(LLMProvider):
+    """OpenRouter exposes an OpenAI-compatible /chat/completions API in front
+    of many hosted models, so we reuse the openai SDK pointed at their base
+    URL instead of writing a bespoke client."""
+
+    name = "openrouter"
+
+    def __init__(self, api_key: str, model: str, max_tokens: int) -> None:
+        import openai
+
+        self._client = openai.AsyncOpenAI(
+            api_key=api_key,
+            base_url="https://openrouter.ai/api/v1",
+            default_headers={
+                # OpenRouter uses these (optional) headers for its public
+                # leaderboard / rankings — harmless to omit but nice to set.
+                "HTTP-Referer": "https://github.com/",
+                "X-Title": "Wajeeha AI",
+            },
+        )
+        self._model = model
+        self._default_max_tokens = max_tokens
+
+    async def complete(
+        self,
+        messages: list[dict],
+        system: str | None = None,
+        max_tokens: int | None = None,
+    ) -> LLMResponse:
+        full_messages = list(messages)
+        if system:
+            full_messages = [{"role": "system", "content": system}] + full_messages
+        resp = await self._client.chat.completions.create(
+            model=self._model,
+            max_tokens=max_tokens or self._default_max_tokens,
+            messages=full_messages,
+        )
+        text = resp.choices[0].message.content or ""
+        return LLMResponse(text=text, provider=self.name, model=self._model, raw=resp)
+
+
 class GeminiProvider(LLMProvider):
     name = "gemini"
 
@@ -161,6 +202,12 @@ class LLMRouter:
             return GeminiProvider(self._secrets.gemini_api_key, cfg.model, cfg.max_tokens)
         if name == "ollama":
             return OllamaProvider(cfg.base_url or "http://localhost:11434", cfg.model)
+        if name == "openrouter":
+            if not self._secrets.openrouter_api_key:
+                raise RuntimeError("OPENROUTER_API_KEY is not set in .env")
+            return OpenRouterProvider(
+                self._secrets.openrouter_api_key, cfg.model, cfg.max_tokens
+            )
 
         raise ValueError(f"Unknown provider '{name}'")
 

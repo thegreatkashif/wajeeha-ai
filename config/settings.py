@@ -29,7 +29,9 @@ class Secrets(BaseSettings):
     anthropic_api_key: str | None = Field(default=None, alias="ANTHROPIC_API_KEY")
     openai_api_key: str | None = Field(default=None, alias="OPENAI_API_KEY")
     gemini_api_key: str | None = Field(default=None, alias="GEMINI_API_KEY")
+    openrouter_api_key: str | None = Field(default=None, alias="OPENROUTER_API_KEY")
     home_assistant_token: str | None = Field(default=None, alias="HOME_ASSISTANT_TOKEN")
+    mqtt_password: str | None = Field(default=None, alias="MQTT_PASSWORD")
 
 
 class LLMProviderConfig(BaseModel):
@@ -62,10 +64,25 @@ class HomeAssistantConfig(BaseModel):
     base_url: str
 
 
+class MqttConfig(BaseModel):
+    host: str = "home-server"
+    port: int = 1883
+    username: str | None = None
+
+
 class HomeAgentConfig(BaseModel):
     enabled: bool = True
     home_assistant: HomeAssistantConfig
     default_room: str = "living_room"
+    mqtt: MqttConfig = Field(default_factory=MqttConfig)
+
+
+class VoiceConfig(BaseModel):
+    enabled: bool = False
+    reference_samples_dir: str = "./voice_samples"
+    model: str = "xtts_v2"
+    language: str = "en"
+    output_dir: str = "./data/voice_out"
 
 
 class CodingAgentConfig(BaseModel):
@@ -102,6 +119,7 @@ class AppConfig(BaseModel):
     agents: AgentsConfig
     planner: PlannerConfig
     logging: LoggingConfig
+    voice: VoiceConfig = Field(default_factory=VoiceConfig)
 
 
 def _load_yaml(path: Path) -> dict[str, Any]:
@@ -132,6 +150,8 @@ def ensure_runtime_dirs(config: AppConfig) -> None:
         Path(config.memory.semantic.chroma_path),
         Path(config.logging.log_dir),
         Path(config.agents.coding.workspace_root),
+        Path(config.voice.reference_samples_dir),
+        Path(config.voice.output_dir),
     ]
     for p in paths:
         p.mkdir(parents=True, exist_ok=True)

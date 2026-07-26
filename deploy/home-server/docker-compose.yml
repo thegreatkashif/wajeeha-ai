@@ -1,0 +1,67 @@
+# Home server (Celeron / 4GB RAM) — lightweight edge services only.
+# No AI inference runs here; the laptop does all of that over Tailscale.
+#
+# Setup:
+#   1. Install Docker + Docker Compose on the server.
+#   2. cp mosquitto/mosquitto.conf.example mosquitto/mosquitto.conf and adjust.
+#   3. `sudo tailscale up` on the host first (Tailscale runs on the host
+#      network, not namespaced, so every container reaches it for free —
+#      no separate Tailscale container needed and no extra RAM spent).
+#   4. docker compose up -d
+#
+# Memory budget on 4GB total (rough, leaves headroom for the OS):
+#   Mosquitto      ~10-20MB
+#   Home Assistant ~250-400MB idle (biggest consumer by far)
+#   Syncthing      ~50-100MB
+#   => comfortably under 1GB combined; the rest stays free for the OS
+#      and Home Assistant's occasional spikes (integrations, automations).
+
+services:
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-log:/mosquitto/log
+    mem_limit: 64m
+
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    restart: unless-stopped
+    privileged: true          # needed for USB (Zigbee/Z-Wave dongles etc.)
+    network_mode: host        # simplest for device discovery on a Pi/NUC-class box
+    volumes:
+      - ha-config:/config
+      - /etc/localtime:/etc/localtime:ro
+    depends_on:
+      - mosquitto
+    mem_limit: 512m
+
+  syncthing:
+    image: syncthing/syncthing:latest
+    container_name: syncthing
+    restart: unless-stopped
+    hostname: home-server
+    environment:
+      - PUID=1000
+      - PGID=1000
+    volumes:
+      - syncthing-config:/var/syncthing/config
+      - ./storage:/var/syncthing/storage
+    ports:
+      - "8384:8384"   # web UI
+      - "22000:22000/tcp"
+      - "22000:22000/udp"
+      - "21027:21027/udp"
+    mem_limit: 128m
+
+volumes:
+  mosquitto-data:
+  mosquitto-log:
+  ha-config:
+  syncthing-config:

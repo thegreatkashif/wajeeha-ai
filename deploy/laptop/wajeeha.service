@@ -1,0 +1,29 @@
+# Systemd USER service — runs Wajeeha's brain node on the laptop.
+# Install:
+#   mkdir -p ~/.config/systemd/user
+#   cp deploy/laptop/wajeeha.service ~/.config/systemd/user/
+#   # edit the two paths below to match your actual install location/user
+#   systemctl --user daemon-reload
+#   systemctl --user enable --now wajeeha.service
+#   loginctl enable-linger $USER   # keeps it running after you log out
+#
+# Note: this runs `cli.py run` style one-shot goals aren't a long-running
+# server by default — swap ExecStart for whatever entrypoint you build for
+# a persistent listener (voice wake-word, HTTP API, etc.) once that's ready.
+# For now this keeps Ollama's dependency (below) resident and gives you one
+# managed unit to extend.
+
+[Unit]
+Description=Wajeeha AI - brain node
+After=network-online.target ollama.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=%h/wajeeha-ai
+ExecStart=%h/wajeeha-ai/.venv/bin/python %h/wajeeha-ai/cli.py chat
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=default.target

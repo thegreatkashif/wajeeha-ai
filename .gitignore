@@ -8,3 +8,8 @@ workspace/
 .pytest_cache/
 *.sqlite3
 .DS_Store
+voice_samples/
+data/voice_out/
+deploy/home-server/mosquitto/mosquitto.conf
+deploy/home-server/mosquitto/passwd
+deploy/home-server/storage/

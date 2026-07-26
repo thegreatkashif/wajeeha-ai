@@ -1,0 +1,13 @@
+listener 1883
+allow_anonymous false
+password_file /mosquitto/config/passwd
+
+persistence true
+persistence_location /mosquitto/data/
+log_dest file /mosquitto/log/mosquitto.log
+
+# Generate passwd file:
+#   docker run -it --rm -v $(pwd):/work eclipse-mosquitto:2 \
+#     mosquitto_passwd -c /work/passwd wajeeha
+# then copy passwd into ./mosquitto/ next to this file and mount it too
+# (add a volume line in docker-compose.yml: ./mosquitto/passwd:/mosquitto/config/passwd:ro)

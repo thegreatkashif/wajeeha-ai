@@ -16,6 +16,7 @@ from config.settings import ensure_runtime_dirs, get_config, get_secrets
 from memory.long_term import LongTermMemory
 from memory.semantic import SemanticMemory
 from memory.short_term import ShortTermMemory
+from agents.memory_agent import MemoryAgent
 
 app = typer.Typer(add_completion=False)
 console = Console()
@@ -51,6 +52,8 @@ async def _build_orchestrator() -> Orchestrator:
     )
 
     agents = []
+    
+    agents.append(MemoryAgent(long_term))
 
     if config.agents.coding.enabled:
         agents.append(
@@ -118,6 +121,32 @@ def run(goal: str) -> None:
         console.print(answer)
 
     asyncio.run(_run())
+
+
+@app.command()
+def speak(text: str, out: str = "output.wav") -> None:
+    """Synthesize `text` in the cloned voice (needs voice.enabled: true and
+    reference clips in voice.reference_samples_dir), e.g.:
+    python cli.py speak "Good morning, lights are on in the living room."
+    """
+    config = get_config()
+    if not config.voice.enabled:
+        console.print(
+            "[yellow]Voice is disabled — set voice.enabled: true in "
+            "config.yaml and add reference clips first.[/yellow]"
+        )
+        raise typer.Exit(1)
+
+    from voice.clone import VoiceCloner
+
+    cloner = VoiceCloner(
+        reference_samples_dir=config.voice.reference_samples_dir,
+        output_dir=config.voice.output_dir,
+        language=config.voice.language,
+    )
+    console.print("[cyan]synthesizing...[/cyan]")
+    path = cloner.synthesize(text, out_filename=out)
+    console.print(f"[bold green]saved:[/bold green] {path}")
 
 
 if __name__ == "__main__":

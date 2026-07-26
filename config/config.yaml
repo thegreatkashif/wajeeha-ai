@@ -5,10 +5,28 @@
 # ==========================================================
 
 llm:
-  default_provider: gemini
+  # All inference runs on the laptop (i7-11th gen / 16GB). "ollama" stays
+  # fully local and free; "openrouter" is the cloud fallback for tasks that
+  # need a stronger model than what comfortably fits in 16GB of RAM.
+  # Switch the active one per-request from code via LLMRouter.get("openrouter"),
+  # or just flip default_provider here.
+  default_provider: ollama
 
   providers:
 
+    ollama:
+      model: llama3.1
+      base_url: http://localhost:11434
+
+    openrouter:
+      # Any model slug from https://openrouter.ai/models works here, e.g.
+      # anthropic/claude-sonnet-4.6, openai/gpt-4o, google/gemini-3.6-flash,
+      # meta-llama/llama-3.1-70b-instruct, deepseek/deepseek-v3, etc.
+      model: anthropic/claude-sonnet-4.6
+      max_tokens: 4096
+
+    # Direct provider SDKs — kept as options, but openrouter covers all of
+    # these through one key if you'd rather not manage separate accounts.
     gemini:
       model: gemini-3.6-flash
       max_tokens: 4096
@@ -21,10 +39,6 @@ llm:
     anthropic:
       model: claude-sonnet-4-6
       max_tokens: 4096
-
-    ollama:
-      model: llama3.1
-      base_url: http://localhost:11434
 
 memory:
 
@@ -60,9 +74,27 @@ agents:
     enabled: true
 
     home_assistant:
-      base_url: http://homeassistant.local:8123
+      # Home Assistant runs on the home server (Celeron/4GB). Reach it over
+      # Tailscale rather than the LAN hostname, so this still works when
+      # you're out of the house too. Replace with the MagicDNS name shown
+      # by `tailscale status` on the server, e.g. home-server.tailnet.ts.net
+      base_url: http://home-server:8123
 
     default_room: living_room
+
+    mqtt:
+      # Mosquitto also runs on the home server, for anything talking MQTT
+      # directly instead of going through the HA REST API.
+      host: home-server
+      port: 1883
+      username: wajeeha
+
+voice:
+  enabled: false          # flip to true once you've dropped reference clips in voice_samples/
+  reference_samples_dir: ./voice_samples
+  model: xtts_v2          # Coqui XTTS-v2 — open-weight, runs on CPU, good clone quality from ~30-60s of audio
+  language: en
+  output_dir: ./data/voice_out
 
 planner:
 
