@@ -65,11 +65,19 @@ class Orchestrator:
         logger.info("Plan for goal %r: %s", goal, plan.model_dump())
 
         if not plan.steps:
-            answer = plan.direct_response or "I don't have a next step for that yet."
+            answer = plan.direct_response or (
+                "Hi! I'm here — ask me to do something (control a device, "
+                "look something up, work on code) or just chat."
+            )
             self._short_term.add_assistant(answer)
             return answer
 
-        final_summary = await self._execute_plan(plan)
+        step_summary = await self._execute_plan(plan)
+        # If the planner already gave a conversational answer, that's what
+        # the user sees — the steps ran for their side effects (saving a
+        # fact, flipping a light, etc.) but a tool error on a supporting
+        # step shouldn't override a perfectly good direct answer.
+        final_summary = plan.direct_response or step_summary
         self._short_term.add_assistant(final_summary)
         self._semantic.add(f"Goal: {goal}\nOutcome: {final_summary}", metadata={"kind": "goal_log"})
         return final_summary

@@ -27,6 +27,20 @@ Rules:
     {"agent": "<agent name>", "tool": "<tool name>", "instruction": "<what to do>"}
   ]
 }
+
+Examples:
+
+User goal: hi
+{"goal": "hi", "direct_response": "Hey! What can I help with?", "steps": []}
+
+User goal: hello how are you?
+{"goal": "hello how are you?", "direct_response": "Doing well, ready to help. What do you need?", "steps": []}
+
+User goal: turn off the living room lights
+{"goal": "turn off the living room lights", "direct_response": null, "steps": [{"agent": "home", "tool": "turn_off", "instruction": "light.living_room"}]}
+
+A bare greeting or small talk NEVER needs a memory lookup, home action, or
+code step — answer it directly with an empty steps list, every time.
 """
 
 
